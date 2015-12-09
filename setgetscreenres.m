@@ -27,7 +27,7 @@ int main (int argc, const char * argv[]){
     if (argc == 1) {
         CGRect rect = CGDisplayBounds(kCGDirectMainDisplay);
         CGSize size  = rect.size;
-        printf("CURRENT: %d %d\n", (int)size.width, (int)size.height);
+        printf("CURRENT: %d %d (2880 1800 is cool for you)\n", (int)size.width, (int)size.height);
         return 0;
     }
     
