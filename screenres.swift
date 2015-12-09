@@ -70,21 +70,17 @@ func main () -> Void {
                 "   -s 0 800    set resolution of display 0 to 800*600\n",
                 ]).joinWithSeparator("")
     let help_display_list = "List all available displays by:\n    \(binary_name) -l"
-    
-
     let argc = Process.arguments.count
     if argc > 1 {
         if Process.arguments[1] == "-l" || Process.arguments[1] == "--list" {
             listDisplays(onlineDisplayIDs, count:displayCount)
             return
         }
-
         if Process.arguments[1] == "-m" || Process.arguments[1] == "--mode" {
             if argc < 3 {
                 print("Specify a display to see its supported modes. \(help_display_list)")
                 return
             }
-
             if let displayIndex = Int(Process.arguments[2]) {
                 if displayIndex < displayCount {
                     let _info = listModesByDisplayID(onlineDisplayIDs[displayIndex])

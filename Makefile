@@ -1,11 +1,12 @@
 CFLAGS=-framework ApplicationServices
 OBJ=screenres
-SRC=$(OBJ).m
+SRC=$(OBJ).swift
 
 test : $(OBJ)
 	./$(OBJ)
 
 $(OBJ): $(SRC)
+	xcrun --sdk macosx swiftc $<
 
 clean: $(OBJ)
 	rm $<
