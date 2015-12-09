@@ -1,15 +1,16 @@
 CFLAGS=-framework ApplicationServices
+OBJ=screenres
+SRC=$(OBJ).m
 
-test : setgetscreenres
-	./setgetscreenres
+test : $(OBJ)
+	./$(OBJ)
 
-setgetscreenres: setgetscreenres.m
-# 	cc -o $@ -framework ApplicationServices $<
+$(OBJ): $(SRC)
 
-clean: setgetscreenres
+clean: $(OBJ)
 	rm $<
 
-install: setgetscreenres
+install: $(OBJ)
 	cp -p $< ~/usr/local/bin
 
 .PHONY: test clean install
