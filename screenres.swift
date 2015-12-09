@@ -225,3 +225,4 @@ func displayInfo(let display:CGDirectDisplayID, var mode:CGDisplayMode?) -> Disp
 }
 // run it
 main()
+

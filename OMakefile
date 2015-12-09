@@ -1,0 +1,9 @@
+.DEFAULT: screenres
+.PHONY: clean
+
+screenres: screenres.swift
+	xcrun --sdk macosx swiftc $<
+
+clean: screenres
+	rm screenres
+
