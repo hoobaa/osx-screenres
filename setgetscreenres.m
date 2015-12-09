@@ -19,17 +19,18 @@
 #include <ApplicationServices/ApplicationServices.h>
 
 int main (int argc, const char * argv[]){
-    int h; // horizontal resolution
-    int v; // vertical resolution
+    int rc;
+    int h=0,v=0;
     CFDictionaryRef mode; // mode to switch to
     CGDirectDisplayID display_id;  // ID of main display
     CFDictionaryRef CGDisplayCurrentMode(CGDirectDisplayID display);
     if (argc == 1) {
-        CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);
-        CGSize screenSize  = screenFrame.size;
-        printf("%d %d\n", (int)screenSize.width, (int)screenSize.height);
+        CGRect rect = CGDisplayBounds(kCGDirectMainDisplay);
+        CGSize size  = rect.size;
+        printf("CURRENT: %d %d\n", (int)size.width, (int)size.height);
         return 0;
     }
+    
     if (argc != 3 || !(h = atoi(argv[1])) || !(v = atoi(argv[2])) ) {
         fprintf(stderr, "ERROR: Use %s horres vertres\n", argv[0]);
         return -1;
@@ -37,7 +38,8 @@ int main (int argc, const char * argv[]){
     display_id = CGMainDisplayID();
     mode = CGDisplayBestModeForParameters(display_id, 32, h, v, NULL);
     CGDisplayConfigRef config;
-    if (CGBeginDisplayConfiguration(&config) != kCGErrorSuccess) {
+    rc = CGBeginDisplayConfiguration(&config);
+    if (rc != kCGErrorSuccess) {
         fprintf(stderr, "Error");
         return 1;
     }
