@@ -1,4 +1,6 @@
 /*
+ * mod by strobolights@gmail.com
+ *
  * setgetscreenres.m
  * 
  * juanfc 2009-04-13
@@ -11,6 +13,7 @@
  * COMPILE:
  *    c++ setgetscreenres.m -framework ApplicationServices -o setgetscreenres
  *    cc setgetscreenres.m -framework ApplicationServices -o setgetscreenres
+ *
  * USE:
  *    setgetscreenres 1440 900
  *    setgetscreenres 2880 1800
