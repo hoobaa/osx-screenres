@@ -16,12 +16,20 @@ import CoreVideo
 // http://stackoverflow.com/questions/24044851
 // http://openradar.appspot.com/radar?id=6373877630369792
 extension String {
-    func substringFromLastOcurrenceOf(let needle:String) -> String {
+    func substringFromLastOcurrenceOf(/*let*/ needle:String) -> String {
         var str = self
-        while let range = str.rangeOfString(needle) {
-            let index2 = range.startIndex.advancedBy(1)
-            let range2 = Range<String.Index>(start: index2, end: str.endIndex)
-            str = str.substringWithRange(range2)
+        while let range = str.range(of: needle) { // str.rangeOfString(needle) {
+            
+            // let lo = string.index(range.lowerBound, offsetBy: 1)
+            // let hi = string.index(range.lowerBound, offsetBy: 3)
+            // let subRange = lo ..< hi
+            // print(string[subRange]) // "DE"
+            let index2 = str.index(range.lowerBound, offsetBy:1)
+            let range2 = index2 ..< str.endIndex;
+            str = str.substring(with:range2)
+            //let index2 = range.startIndex.advancedBy(1)
+            //let range2 = Range<String.Index>(start: index2, end: str.endIndex)
+            //str = str.substringWithRange(range2)
         }
         return str
     }
@@ -40,11 +48,11 @@ var maxDisplays:UInt32 = 8
 var displayCount32:UInt32 = 0
 
 // store displayID in an raw array
-var onlineDisplayIDs = UnsafeMutablePointer<CGDirectDisplayID>.alloc(Int(maxDisplays))
+var onlineDisplayIDs = UnsafeMutablePointer<CGDirectDisplayID>.allocate(capacity:Int(maxDisplays))
 
 func main () -> Void {
     let error:CGError = CGGetOnlineDisplayList(maxDisplays, onlineDisplayIDs, &displayCount32)
-    if (error != .Success) {
+    if (error != .success) {
         print("Error on getting online display List.");
         return
     }
@@ -53,7 +61,7 @@ func main () -> Void {
 
 
     // strip path and leave filename
-    let binary_name = Process.arguments[0].substringFromLastOcurrenceOf("/")
+    let binary_name = CommandLine.arguments[0].substringFromLastOcurrenceOf(needle:"/")
 
     // help message
     let help_msg = ([
@@ -68,23 +76,23 @@ func main () -> Void {
                 "   -l          list displays\n",
                 "   -m 0        list all mode from a certain display\n",
                 "   -s 0 800    set resolution of display 0 to 800*600\n",
-                ]).joinWithSeparator("")
+                ]).joined(separator:"") //joinWithSeparator("")
     let help_display_list = "List all available displays by:\n    \(binary_name) -l"
-    let argc = Process.arguments.count
+    let argc = CommandLine.arguments.count
     if argc > 1 {
-        if Process.arguments[1] == "-l" || Process.arguments[1] == "--list" {
-            listDisplays(onlineDisplayIDs, count:displayCount)
+        if CommandLine.arguments[1] == "-l" || CommandLine.arguments[1] == "--list" {
+            listDisplays(displayIDs:onlineDisplayIDs, count:displayCount)
             return
         }
-        if Process.arguments[1] == "-m" || Process.arguments[1] == "--mode" {
+        if CommandLine.arguments[1] == "-m" || CommandLine.arguments[1] == "--mode" {
             if argc < 3 {
                 print("Specify a display to see its supported modes. \(help_display_list)")
                 return
             }
-            if let displayIndex = Int(Process.arguments[2]) {
+            if let displayIndex = Int(CommandLine.arguments[2]) {
                 if displayIndex < displayCount {
-                    let _info = listModesByDisplayID(onlineDisplayIDs[displayIndex])
-                    displayModes(onlineDisplayIDs[displayIndex], index:displayIndex, _modes:_info)
+                    let _info = listModesByDisplayID(_displayID:onlineDisplayIDs[displayIndex])
+                    displayModes(_display:onlineDisplayIDs[displayIndex], index:displayIndex, _modes:_info)
                 } else {
                     print("Display index: \(displayIndex) not found. \(help_display_list)")
                 }
@@ -93,7 +101,7 @@ func main () -> Void {
             }
             return
         }
-        if Process.arguments[1] == "-s" || Process.arguments[1] == "--set" {
+        if CommandLine.arguments[1] == "-s" || CommandLine.arguments[1] == "--set" {
             if argc < 3 {
                 print("Specify a display to set its mode. \(help_display_list)")
                 return
@@ -102,13 +110,13 @@ func main () -> Void {
                 print("Specify display width")
                 return
             }
-            if let displayIndex = Int(Process.arguments[2]) {
+            if let displayIndex = Int(CommandLine.arguments[2]) {
                 if displayIndex < displayCount {
-                    if let designatedWidth = Process.arguments[3].toUInt() {
-                        if let modesArray = listModesByDisplayID(onlineDisplayIDs[displayIndex]) {
+                    if let designatedWidth = CommandLine.arguments[3].toUInt() {
+                        if let modesArray = listModesByDisplayID(_displayID:onlineDisplayIDs[displayIndex]) {
                             var designatedWidthIndex:Int?
                             for i in 0..<modesArray.count {
-                                let di = displayInfo(onlineDisplayIDs[displayIndex], mode:modesArray[i])
+                                let di = displayInfo(display:onlineDisplayIDs[displayIndex], mode:modesArray[i])
                                 if di.width == designatedWidth {
                                     designatedWidthIndex = i
                                     break
@@ -116,7 +124,8 @@ func main () -> Void {
                             }
                             if designatedWidthIndex != nil {
                                 print("setting display mode")
-                                setDisplayMode(onlineDisplayIDs[displayIndex], mode:modesArray[designatedWidthIndex!], designatedWidth:designatedWidth)
+                                // BB
+                                setDisplayMode(display:onlineDisplayIDs[displayIndex], mode:modesArray[designatedWidthIndex!], designatedWidth:designatedWidth)
                             }
                             else {
                                 print("This mode is unavailable for current desktop GUI")
@@ -133,28 +142,30 @@ func main () -> Void {
     print(help_msg)
 }
 
-func setDisplayMode(let display:CGDirectDisplayID, let mode:CGDisplayMode, let designatedWidth:UInt) -> Void {
-    if CGDisplayModeIsUsableForDesktopGUI(mode) {
-        let config = UnsafeMutablePointer<CGDisplayConfigRef>.alloc(1);
+// AA
+func setDisplayMode(/* let */ display:CGDirectDisplayID, /* let */ mode:CGDisplayMode, /* let */ designatedWidth:UInt) -> Void {
+    if mode.isUsableForDesktopGUI() {
+    //if CGDisplayModeIsUsableForDesktopGUI(mode) {
+        let config = UnsafeMutablePointer<CGDisplayConfigRef?>.allocate(capacity:1);
         let error = CGBeginDisplayConfiguration(config)
-        if error == .Success {
-            if nil != config {
+        if error == .success {
+            // if nil != config {
                 let option:CGConfigureOption = CGConfigureOption(rawValue:2) //XXX: permanently
-                CGConfigureDisplayWithDisplayMode(config.memory, display, mode, nil)
-                let afterCheck = CGCompleteDisplayConfiguration(config.memory, option)
-                if afterCheck != .Success {
-                    CGCancelDisplayConfiguration(config.memory)
+                CGConfigureDisplayWithDisplayMode(config.pointee, display, mode, nil)
+                let afterCheck = CGCompleteDisplayConfiguration(config.pointee, option)
+                if afterCheck != .success {
+                    CGCancelDisplayConfiguration(config.pointee)
                 }
-            } else {
-                print("Setting display mode failed")
-            }
+            // } else {
+            //     print("Setting display mode failed")
+            // }
         }
     } else {
         print("This mode is unavailable for current desktop GUI")
     }
 }
 // list mode by display id
-func listModesByDisplayID(let _displayID:CGDirectDisplayID?) -> [CGDisplayMode]? {
+func listModesByDisplayID(/* let */ _displayID:CGDirectDisplayID?) -> [CGDisplayMode]? {
     if let displayID = _displayID {
         if let modeList = CGDisplayCopyAllDisplayModes(displayID, nil) {
             var modesArray = [CGDisplayMode]()
@@ -163,7 +174,7 @@ func listModesByDisplayID(let _displayID:CGDirectDisplayID?) -> [CGDisplayMode]?
             for i in 0..<count {
                 let modeRaw = CFArrayGetValueAtIndex(modeList, i)
                 // https://github.com/FUKUZAWA-Tadashi/FHCCommander
-                let mode = unsafeBitCast(modeRaw, CGDisplayMode.self)
+                let mode = unsafeBitCast(modeRaw, to:CGDisplayMode.self)
 
                 modesArray.append(mode)
             }
@@ -174,27 +185,27 @@ func listModesByDisplayID(let _displayID:CGDirectDisplayID?) -> [CGDisplayMode]?
     return nil
 }
 
-func displayModes(let _display:CGDirectDisplayID?, let index:Int, let _modes:[CGDisplayMode]?) -> Void {
+func displayModes(/* let */ _display:CGDirectDisplayID?, /* let */ index:Int, /* let */ _modes:[CGDisplayMode]?) -> Void {
     if let display = _display {
         if let modes = _modes {
             print("Supported Modes for Display \(index):")
-            let nf = NSNumberFormatter()
-            nf.paddingPosition = NSNumberFormatterPadPosition.BeforePrefix
+            let nf = NumberFormatter()
+            nf.paddingPosition = NumberFormatter.PadPosition.beforePrefix
             nf.paddingCharacter = " " // XXX: Swift does not support padding yet
             nf.minimumIntegerDigits = 3 // XXX
 
             for i in 0..<modes.count {
-                let di = displayInfo(display, mode:modes[i])
-                print("       \(nf.stringFromNumber(di.width)!) * \(nf.stringFromNumber(di.height)!) @ \(di.frequency)Hz")
+                let di = displayInfo(display:display, mode:modes[i])
+                print("       \(nf.string(from:NSNumber(value:di.width))!) * \(nf.string(from:NSNumber(value:di.height))!) @ \(di.frequency)Hz")
             }
         }
     }
 }
 // print a list of all displays
 // used by -l
-func listDisplays(let displayIDs:UnsafeMutablePointer<CGDirectDisplayID>, let count:Int) -> Void {
+func listDisplays(/* let */ displayIDs:UnsafeMutablePointer<CGDirectDisplayID>, /* let */ count:Int) -> Void {
     for i in 0..<count {
-        let di = displayInfo(displayIDs[i], mode:nil)
+        let di = displayInfo(display:displayIDs[i], mode:nil)
         print("Display \(i):  \(di.width) * \(di.height) @ \(di.frequency)Hz")
     }
 }
@@ -203,13 +214,14 @@ struct DisplayInfo {
     var width:UInt, height:UInt, frequency:UInt
 }
 // return with, height and frequency info for corresponding displayID
-func displayInfo(let display:CGDirectDisplayID, var mode:CGDisplayMode?) -> DisplayInfo {
+func displayInfo(/* let */ display:CGDirectDisplayID, /* var */ mode:CGDisplayMode?) -> DisplayInfo {
+    var mode = mode
     if mode == nil {
         mode = CGDisplayCopyDisplayMode(display)!
     }
-    let width = UInt( CGDisplayModeGetWidth(mode) )
-    let height = UInt( CGDisplayModeGetHeight(mode) )
-    var frequency = UInt( CGDisplayModeGetRefreshRate(mode) )
+    let width = UInt( mode!.width )
+    let height = UInt( mode!.height )
+    var frequency = UInt( mode!.refreshRate /* CGDisplayModeGetRefreshRate(mode) */ )
 
     if frequency == 0 {
         var link:CVDisplayLink?
